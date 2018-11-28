@@ -688,5 +688,10 @@
         "author": "Felix Niklas",
         "url": "",
         "license": "MIT"
+    },
+    "signal.svg": {
+        "author": "Carrie Stiens Winfrey",
+        "url": "",
+        "license": "CC BY 3.0"
     }
 }
