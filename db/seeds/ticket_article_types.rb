@@ -11,3 +11,4 @@ Ticket::Article::Type.create_if_not_exists(id: 10, name: 'note', communication: 
 Ticket::Article::Type.create_if_not_exists(id: 11, name: 'web', communication: true)
 Ticket::Article::Type.create_if_not_exists(id: 12, name: 'telegram personal-message', communication: true)
 Ticket::Article::Type.create_if_not_exists(id: 13, name: 'signal personal-message', communication: true)
+Ticket::Article::Type.create_if_not_exists(id: 14, name: 'quepasa personal-message', communication: true)

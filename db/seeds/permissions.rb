@@ -149,6 +149,13 @@ Permission.create_if_not_exists(
   preferences: {
     translations: ['Channel - Signal']
   },
+  )
+Permission.create_if_not_exists(
+  name:        'admin.channel_quepasa',
+  note:        'Manage %s',
+  preferences: {
+    translations: ['Channel - QuePasa']
+  },
 )
 Permission.create_if_not_exists(
   name:        'admin.channel_sms',
