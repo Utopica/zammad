@@ -1684,6 +1684,19 @@ RSpec.describe 'Ticket', type: :request do
       expect(json_response['assets']['User'][customer_user.id.to_s]['firstname']).to eq(customer_user.firstname)
       expect(json_response['assets']['User'][customer_user.id.to_s]['lastname']).to eq(customer_user.lastname)
 
+      # it should be not possible to modify the ticket number
+      expected_ticket_number = ticket.number
+      params = {
+        title:  'a update ticket #4',
+        number: '77777',
+      }
+      put "/api/v1/tickets/#{ticket.id}?full=true", params: params, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(json_response).to be_a_kind_of(Hash)
+
+      ticket = Ticket.find(json_response['id'])
+      expect(json_response['assets']['Ticket'][ticket.id.to_s]['title']).to eq('a update ticket #4')
+      expect(json_response['assets']['Ticket'][ticket.id.to_s]['number']).to eq(expected_ticket_number)
     end
 
     it 'does ticket split with html - check attachments (05.01)' do
@@ -2138,6 +2151,61 @@ RSpec.describe 'Ticket', type: :request do
         context 'as customer', authenticated_as: -> { customer } do
           include_examples 'fail to reopen a ticket'
         end
+      end
+    end
+  end
+
+  describe 'GET /api/v1/ticket_customer' do
+
+    subject(:ticket) { create(:ticket, customer: customer_authorized) }
+
+    let(:organization_authorized) { create(:organization) }
+    let(:customer_authorized) { create(:customer_user, organization: organization_authorized) }
+
+    let(:organization_unauthorized) { create(:organization) }
+    let(:customer_unauthorized) { create(:customer_user, organization: organization_unauthorized) }
+
+    let(:agent) { create(:agent_user, groups: [ticket.group]) }
+
+    describe 'listing information' do
+
+      before do
+        ticket
+      end
+
+      shared_examples 'has access' do
+        it 'succeeds' do
+          get '/api/v1/ticket_customer',
+              params: { customer_id: customer_authorized.id },
+              as:     :json
+
+          expect(json_response['ticket_ids_open']).to include(ticket.id)
+          expect(json_response['ticket_ids_closed']).to be_blank
+        end
+      end
+
+      shared_examples 'has no access' do
+        it 'fails' do
+          get '/api/v1/ticket_customer',
+              params: { customer_id: customer_authorized.id },
+              as:     :json
+
+          expect(json_response['ticket_ids_open']).to be_blank
+          expect(json_response['ticket_ids_closed']).to be_blank
+          expect(json_response['assets']).to be_blank
+        end
+      end
+
+      context 'as agent', authenticated_as: -> { agent } do
+        include_examples 'has access'
+      end
+
+      context 'as authorized customer', authenticated_as: -> { customer_authorized } do
+        include_examples 'has access'
+      end
+
+      context 'as unauthorized customer', authenticated_as: -> { customer_unauthorized } do
+        include_examples 'has no access'
       end
     end
   end

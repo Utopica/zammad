@@ -109,14 +109,16 @@ class App.UiElement.ticket_perform_action
         item.append(element)
         @rebuildAttributeSelectors(item, element, groupAndAttribute, elements, {}, attribute)
 
-      return item
+    else
 
-    for groupAndAttribute, meta of params[attribute.name]
+      for groupAndAttribute, meta of params[attribute.name]
 
-      # build and append
-      element = @placeholder(item, attribute, params, groups, elements)
-      @rebuildAttributeSelectors(item, element, groupAndAttribute, elements, meta, attribute)
-      item.append(element)
+        # build and append
+        element = @placeholder(item, attribute, params, groups, elements)
+        @rebuildAttributeSelectors(item, element, groupAndAttribute, elements, meta, attribute)
+        item.append(element)
+
+    @disableRemoveForOneAttribute(item)
     item
 
   @buildAttributeSelector: (elementFull, groups, elements) ->
@@ -145,6 +147,13 @@ class App.UiElement.ticket_perform_action
           optgroup.append("<option value=\"#{elementKey}\" #{selected}>#{displayName}</option>")
     selection
 
+  # disable - if we only have one attribute
+  @disableRemoveForOneAttribute: (elementFull) ->
+    if elementFull.find('.js-attributeSelector select').length > 1
+      elementFull.find('.js-remove').removeClass('is-disabled')
+    else
+      elementFull.find('.js-remove').addClass('is-disabled')
+
   @updateAttributeSelectors: (elementFull) ->
 
     # enable all
@@ -157,10 +166,7 @@ class App.UiElement.ticket_perform_action
     )
 
     # disable - if we only have one attribute
-    if elementFull.find('.js-attributeSelector select').length > 1
-      elementFull.find('.js-remove').removeClass('is-disabled')
-    else
-      elementFull.find('.js-remove').addClass('is-disabled')
+    @disableRemoveForOneAttribute(elementFull)
 
   @rebuildAttributeSelectors: (elementFull, elementRow, groupAndAttribute, elements, meta, attribute) ->
 
@@ -342,20 +348,38 @@ class App.UiElement.ticket_perform_action
     if !_.isArray(meta.recipient)
       meta.recipient = [meta.recipient]
 
-    column_select_options = []
+    columnSelectOptions = []
     for key, value of options
       selected = undefined
       for recipient in meta.recipient
         if key is recipient
           selected = true
-      column_select_options.push({ value: key, name: App.i18n.translateInline(value), selected: selected })
+      columnSelectOptions.push({ value: key, name: App.i18n.translateInline(value), selected: selected })
 
-    column_select = new App.ColumnSelect
+    columnSelectRecipientUserOptions = []
+    for user in App.User.all()
+      key = "userid_#{user.id}"
+      selected = undefined
+      for recipient in meta.recipient
+        if key is recipient
+          selected = true
+      columnSelectRecipientUserOptions.push({ value: key, name: "#{user.firstname} #{user.lastname}", selected: selected })
+
+    columnSelectRecipient = new App.ColumnSelect
       attribute:
         name:    "#{name}::recipient"
-        options: column_select_options
+        options: [
+          {
+            label: 'Variables',
+            group: columnSelectOptions
+          },
+          {
+            label: 'User',
+            group: columnSelectRecipientUserOptions
+          },
+        ]
 
-    selection = column_select.element()
+    selectionRecipient = columnSelectRecipient.element()
 
     notificationElement = $( App.view('generic/ticket_perform_action/notification')(
       attribute: attribute
@@ -363,7 +387,19 @@ class App.UiElement.ticket_perform_action
       notificationType: notificationType
       meta: meta || {}
     ))
-    notificationElement.find('.js-recipient select').replaceWith(selection)
+    notificationElement.find('.js-recipient select').replaceWith(selectionRecipient)
+
+    visibilitySelection = App.UiElement.select.render(
+      name: "#{name}::internal"
+      multiple: false
+      null: false
+      options: { true: 'internal', false: 'public' }
+      value: meta.internal || 'false'
+      translate: true
+    )
+
+    notificationElement.find('.js-internal').html(visibilitySelection)
+
     notificationElement.find('.js-body div[contenteditable="true"]').ce(
       mode: 'richtext'
       placeholder: 'message'
@@ -404,9 +440,9 @@ class App.UiElement.ticket_perform_action
       name: "#{name}::internal"
       multiple: false
       null: false
+      label: 'Visibility'
       options: { true: 'internal', false: 'public' }
       value: meta.internal
-      class: 'form-control--small'
       translate: true
     )
     articleElement = $( App.view('generic/ticket_perform_action/article')(

@@ -24,6 +24,10 @@ RSpec.describe 'QUnit', type: :system, authenticated: false, set_up: true, webso
     async_q_unit_tests('core')
   end
 
+  it 'I18n' do
+    async_q_unit_tests('i18n')
+  end
+
   context 'UI' do
 
     it 'Base' do
@@ -76,6 +80,10 @@ RSpec.describe 'QUnit', type: :system, authenticated: false, set_up: true, webso
 
     it 'Timer' do
       q_unit_tests('form_timer')
+    end
+
+    it 'Color' do
+      q_unit_tests('form_color')
     end
 
     it 'Extended' do

@@ -681,7 +681,8 @@ class App.Utils
     $('<div/>').html(message).contents().each (index, node) ->
       text = $(node).text()
       if node.nodeType == Node.TEXT_NODE
-        res.push text
+        # convert text back to HTML as it was before
+        res.push $('<div>').text(text).html()
         if text.trim().length
           contentNodes.push index
       else if node.nodeType == Node.ELEMENT_NODE
@@ -1216,13 +1217,40 @@ class App.Utils
     )
     html.get(0).innerHTML
 
-  @_htmlImage2DataUrl: (img) ->
+  @_htmlImage2DataUrl: (img, params = {}) ->
     canvas = document.createElement('canvas')
     canvas.width = img.width
     canvas.height = img.height
     ctx = canvas.getContext('2d')
     ctx.drawImage(img, 0, 0)
-    canvas.toDataURL('image/png')
+    try
+      data = canvas.toDataURL('image/png')
+      params.success(img, data) if params.success
+      return data
+    catch e
+      App.Log.notice('Utils', "Can\'t insert image from #{img.src}", e)
+      params.fail(img) if params.fail
+    return
+
+  # convert image urls info data urls in element
+  @htmlImage2DataUrlAsyncInline: (html, params = {}) ->
+    html.find('img').each( (index) ->
+      element = $(@)
+      src = element.attr('src')
+
+      # <img src="cid: ..."> or an empty src attribute may mean broken emails (see issue #2305 / #2701)
+      return if !src? or src.match(/^(data|cid):/i)
+      App.Utils._htmlImage2DataUrlAsync(@,
+        success: (img, data) ->
+          $img = $(img)
+          $img.attr('src', data)
+          $img.css('max-width','100%')
+          params.success(img, data) if params.success
+        fail: (img) ->
+          img.remove()
+          params.fail(img) if params.fail
+      )
+    )
 
   # works asynchronously to make sure images are loaded before converting to base64
   # output is passed to callback
@@ -1238,7 +1266,7 @@ class App.Utils
 
     cacheOrDone = ->
       if (nextElem = elems.pop())
-        App.Utils._htmlImage2DataUrlAsync(nextElem, (data) ->
+        App.Utils._htmlImage2DataUrlAsync(nextElem, success: (data) ->
           $(nextElem).attr('src', data)
           cacheOrDone()
         )
@@ -1247,12 +1275,14 @@ class App.Utils
 
     cacheOrDone()
 
-  @_htmlImage2DataUrlAsync: (originalImage, callback) ->
+  @_htmlImage2DataUrlAsync: (originalImage, params = {}) ->
     imageCache = new Image()
+    imageCache.crossOrigin = 'anonymous'
     imageCache.onload = ->
-      data = App.Utils._htmlImage2DataUrl(originalImage)
-      callback(data)
-
+      App.Utils._htmlImage2DataUrl(originalImage, params)
+    imageCache.onerror = ->
+      App.Log.notice('Utils', "Unable to load image from #{originalImage.src}")
+      params.fail(originalImage) if params.fail
     imageCache.src = originalImage.src
 
   @baseUrl: ->

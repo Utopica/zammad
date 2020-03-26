@@ -407,6 +407,7 @@ test('form checks', function() {
         recipient: 'ticket_customer',
         subject: 'some subject',
         body: "some<br>\nbody",
+        internal: 'false'
       },
     },
   }
@@ -479,6 +480,7 @@ test('form checks', function() {
         recipient: 'ticket_customer',
         subject: 'some subject',
         body: "some<br>\nbody",
+        internal: 'false'
       },
     },
   }
@@ -539,6 +541,7 @@ test('form checks', function() {
         recipient: 'ticket_customer',
         subject: 'some subject',
         body: "some<br>\nbody",
+        internal: 'false',
       },
     },
   }
@@ -651,6 +654,7 @@ test('form checks', function() {
         recipient: 'ticket_owner',
         subject: 'some subject',
         body: 'lala',
+        internal: 'false'
       },
     },
   }
@@ -671,6 +675,7 @@ test('form checks', function() {
         recipient: 'ticket_customer',
         subject: 'some subject',
         body: "some<br>\nbody",
+        internal: 'false'
       },
     },
   }
@@ -699,6 +704,7 @@ test('form checks', function() {
         recipient: 'ticket_customer',
         subject: 'some subject',
         body: "some<br>\nbody",
+        internal: 'false',
       },
     },
   }
@@ -718,9 +724,10 @@ test('form checks', function() {
         recipient: 'ticket_customer',
         subject: 'some subject',
         body: "some<br>\nbody",
+        internal: 'false'
       },
     },
-  } 
+  }
   new App.ControllerForm({
     el:        el,
     model:     {
@@ -745,6 +752,7 @@ test('form checks', function() {
         recipient: 'ticket_customer',
         subject: 'some subject',
         body: "some<br>\nbody",
+        internal: 'false'
       },
     },
   }

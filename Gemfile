@@ -1,8 +1,8 @@
 source 'https://rubygems.org'
 
 # core - base
-ruby '2.5.5'
-gem 'rails', '5.2.4.1'
+ruby '2.6.5'
+gem 'rails', '5.2.4.2'
 
 # core - rails additions
 gem 'activerecord-import'
@@ -34,6 +34,9 @@ gem 'argon2'
 
 # core - state machine
 gem 'aasm'
+
+# core - authorization
+gem 'pundit'
 
 # performance - Memcached
 gem 'dalli'
@@ -150,6 +153,9 @@ group :development, :test do
   gem 'rspec-rails'
   gem 'shoulda-matchers'
   gem 'test-unit'
+
+  # for testing Pundit authorisation policies in RSpec
+  gem 'pundit-matchers'
 
   # code coverage
   gem 'coveralls', require: false

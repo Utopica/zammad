@@ -12,13 +12,12 @@ class User < ApplicationModel
   include HasGroups
   include HasRoles
   include HasObjectManagerAttributesValidation
-
-  include User::ChecksAccess
+  include HasTicketCreateScreenImpact
+  include User::HasTicketCreateScreenImpact
   include User::Assets
   include User::Search
   include User::SearchIndex
 
-  has_and_belongs_to_many :roles,          after_add: %i[cache_update check_notifications], after_remove: :cache_update, before_add: %i[validate_agent_limit_by_role validate_roles], before_remove: :last_admin_check_by_role, class_name: 'Role'
   has_and_belongs_to_many :organizations,  after_add: :cache_update, after_remove: :cache_update, class_name: 'Organization'
   has_many                :tokens,         after_add: :cache_update, after_remove: :cache_update
   has_many                :authorizations, after_add: :cache_update, after_remove: :cache_update
@@ -421,14 +420,10 @@ returns
 =end
 
   def permissions?(key)
-    keys = key
-    if key.class == String
-      keys = [key]
-    end
-    keys.each do |local_key|
+    Array(key).each do |local_key|
       list = []
       if local_key.match?(/\.\*$/)
-        local_key.sub!('.*', '.%')
+        local_key = local_key.sub('.*', '.%')
         permissions = ::Permission.with_parents(local_key)
         list = ::Permission.select('preferences').joins(:roles).where('roles.id IN (?) AND roles.active = ? AND (permissions.name IN (?) OR permissions.name LIKE ?) AND permissions.active = ?', role_ids, true, permissions, local_key, true).pluck(:preferences)
       else

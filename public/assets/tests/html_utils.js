@@ -3263,20 +3263,34 @@ test('App.Utils.icon()', function() {
   equal(App.Utils.icon('arrow-{end}'), svgTag, 'for rtl locale / name includes "{end}"')
 });
 
-source = '<img src="/assets/images/avatar-bg.png">some test'
-$('#image2text').html(source)
-var htmlImage2DataUrlTest = function() {
-
-  var result = App.Utils.htmlImage2DataUrl(source)
-  test("htmlImage2DataUrl async", function() {
-    var result = App.Utils.htmlImage2DataUrl(source)
-    ok(result.match(/some test/), source)
-    ok(!result.match(/avatar-bg.png/), source)
-    ok(result.match(/^\<img src=\"data:image\/png;base64,/), source)
+var source1 = '<img src="/assets/images/avatar-bg.png">some test'
+$('#image2data1').html(source1)
+var htmlImage2DataUrlTest1 = function() {
+  test("htmlImage2DataUrl1 async", function() {
+    var result1 = App.Utils.htmlImage2DataUrl(source1)
+    ok(result1.match(/some test/), source1)
+    ok(!result1.match(/avatar-bg.png/), source1)
+    ok(result1.match(/^\<img src=\"data:image\/png;base64,/), source1)
   });
-
 }
-$('#image2text img').one('load', htmlImage2DataUrlTest)
+$('#image2data1 img').one('load', htmlImage2DataUrlTest1)
+
+
+var source2 = '<img src="/assets/images/chat-demo-avatar.png">some test'
+$('#image2data2').html(source2)
+var htmlImage2DataUrlTest2Success = function(element) {
+  test('htmlImage2DataUrl2 async', function() {
+    ok(!$(element).html().match(/chat-demo-avatar/), source2)
+    ok($(element).get(0).outerHTML.match(/^\<img src=\"data:image\/png;base64,/), source2)
+    ok($(element).attr('style'), 'max-width: 100%;')
+  });
+}
+var htmlImage2DataUrlTest2Fail = function() {
+  test('htmlImage2DataUrl2 async', function() {
+    ok(false, 'fail callback is exectuted!')
+  });
+}
+App.Utils.htmlImage2DataUrlAsyncInline($('#image2data2'), {success: htmlImage2DataUrlTest2Success, fail: htmlImage2DataUrlTest2Fail})
 
 }
 
@@ -3367,3 +3381,8 @@ test('App.Utils.clipboardHtmlInsertPreperation()', function() {
   equal(App.Utils.clipboardHtmlInsertPreperation('<div><b>test</b><br> 123</div>', { mode: 'textonly', multiline: true }), 'test<br> 123')
 });
 
+test('App.Utils.signatureIdentifyByHtmlHelper()', function() {
+  result = App.Utils.signatureIdentifyByHtmlHelper("&lt;script&gt;alert('fish2');&lt;/script&gt;<blockquote></blockquote>")
+
+  equal(result, "&lt;script&gt;alert('fish2');&lt;/script&gt;<span class=\"js-signatureMarker\"></span><blockquote></blockquote>", 'signatureIdentifyByHtmlHelper does not reactivate alert')
+});
